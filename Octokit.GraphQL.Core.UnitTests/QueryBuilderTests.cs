@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Octokit.GraphQL.Core.Builders;
 using Octokit.GraphQL.Core.UnitTests.Models;
 using Xunit;
@@ -638,6 +639,100 @@ namespace Octokit.GraphQL.Core.UnitTests
             Assert.Equal(
                 "Cannot directly select \'IQueryableList<>\'. Use ToList() to unwrap the value.",
                 exception.Message);
+        }
+
+        [Fact]
+        public void Can_Select_Same_Repo_Last_Issue_And_Label()
+        {
+            var expected = @"query {
+  repository(owner: ""foo"", name: ""bar"") {
+    issues(last: 1) {
+      nodes {
+        title
+      }
+    }
+    labels(last: 1) {
+      nodes {
+        name
+      }
+    }
+  }
+}";
+
+/*
+            var expected = @"query {
+  repository(owner: ""foo"", name: ""bar"", owner: ""foo"", name: ""bar"") {
+    issues(last: 1) {
+      nodes {
+        title
+      }
+    }
+    labels(last: 1) {
+      nodes {
+        name
+      }
+    }
+  }
+}";
+*/
+
+            var expression = new Query().Select(query1 => 
+                    new
+                    {
+                        LastIssue = query1.Repository("foo", "bar").Issues(null, null, 1, null, null).Nodes.Select(issue => issue.Title).ToList(),
+                        LastLabel = query1.Repository("foo", "bar").Labels(null, null, 1, null, null).Nodes.Select(label => label.Name).ToList()
+                    });
+
+            var query = expression.Compile();
+
+            Assert.Equal(expected, query.ToString(2), ignoreLineEndingDifferences: true);
+        }
+
+        [Fact]
+        public void Can_Select_Different_Repo_Last_Issue_And_Label()
+        {
+            var expected = @"query {
+  repository(owner: ""foo"", name: ""bar"") {
+    issues(last: 1) {
+      nodes {
+        title
+      }
+    }
+    labels(last: 1) {
+      nodes {
+        name
+      }
+    }
+  }
+}";
+
+/*
+            var expected = @"query {
+  repository(owner: ""foo"", name: ""bar"", owner: ""fo"", name: ""sheezy"") {
+    issues(last: 1) {
+      nodes {
+        title
+      }
+    }
+    labels(last: 1) {
+      nodes {
+        name
+      }
+    }
+  }
+}";
+*/
+
+            var expression = new Query().Select(query1 => 
+                    new
+                    {
+                        LastIssue = query1.Repository("foo", "bar").Issues(null, null, 1, null, null).Nodes.Select(issue => issue.Title).ToList(),
+                        LastLabel = query1.Repository("fo", "sheezy").Labels(null, null, 1, null, null).Nodes.Select(label => label.Name).ToList()
+                    });
+
+            var query = expression.Compile();
+
+            Assert.Equal(expected, query.ToString(2), ignoreLineEndingDifferences: true);
         }
     }
 }
