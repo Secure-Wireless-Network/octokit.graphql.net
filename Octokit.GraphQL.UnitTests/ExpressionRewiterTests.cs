@@ -166,6 +166,36 @@ namespace Octokit.GraphQL.UnitTests
             Assert.Equal(expected.ToString(), query.GetResultBuilderExpression().ToString());
         }
 
+        [Fact]
+        public void Can_Select_Different_Repo_Last_Issue_And_Label()
+        {
+            var expression = new Query().Select(query1 =>
+                new
+                {
+                    LastIssue = query1.Repository("foo", "bar").Issues(null, null, 1, null, null, null, null).Nodes.Select(issue => issue.Title).ToList(),
+                    LastLabel = query1.Repository("fo", "sheezy").Labels(null, null, 1, null, null).Nodes.Select(label => label.Name).ToList()
+                });
+
+            Expression<Func<JObject, IEnumerable<object>>> expected = data =>
+                Rewritten.List.Select(
+                    data["data"],
+                    query1 => new
+                    {
+                        LastIssue = Rewritten.List.ToList<string>(
+                            Rewritten.List.Select(query1["repository"]["lastIssue"]["nodes"], issue => issue["title"])
+                        ),
+                        LastLabel =
+                            Rewritten.List.ToList<string>(
+                            Rewritten.List.Select(query1["repository"]["lastLabel"]["nodes"], label => label["name"])
+                            ),
+                    });
+
+            var query = new QueryBuilder().Build(expression);
+            var s = query.GetResultBuilderExpression().ToString();
+            var enumerable = expected.ToString();
+            Assert.Equal(enumerable, query.GetResultBuilderExpression().ToString());
+        }
+
         [Fact(Skip = "Not yet working")]
         public void Search_User_Name_Via_Edges()
         {
