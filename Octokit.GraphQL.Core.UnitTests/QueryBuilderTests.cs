@@ -646,12 +646,12 @@ namespace Octokit.GraphQL.Core.UnitTests
         {
             var expected = @"query {
   repository(owner: ""foo"", name: ""bar"") {
-    issues(last: 1) {
+    lastIssue: issues(last: 1) {
       nodes {
         title
       }
     }
-    labels(last: 1) {
+    lastLabel: labels(last: 1) {
       nodes {
         name
       }
@@ -693,12 +693,12 @@ namespace Octokit.GraphQL.Core.UnitTests
         {
             var expected = @"query {
   repository(owner: ""foo"", name: ""bar"") {
-    issues(last: 1) {
+    lastIssue: issues(last: 1) {
       nodes {
         title
       }
     }
-    labels(last: 1) {
+    lastLabel: labels(last: 1) {
       nodes {
         name
       }
